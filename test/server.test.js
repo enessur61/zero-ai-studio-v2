@@ -23,7 +23,8 @@ test('Folge produzieren und einzelne Szene neu erstellen', async () => {
     const ep = await res.json();
     assert.equal(ep.status, 'done');
     assert.equal(ep.scenes.length, 3);
-    assert.equal(ep.steps.export.result.stub, true, 'Export ist ausdrücklich ein Platzhalter');
+    assert.ok(ep.steps.export.result.file, 'Export hat eine Datei erzeugt');
+    assert.match(ep.steps.export.result.note, /Test-Export/, 'Export ist ausdrücklich ein Test-Export');
 
     const regen = await post(`${base}/api/episodes/${ep.id}/scenes/2/regenerate`, { mood: 'nervös' });
     assert.equal(regen.status, 200);
@@ -39,6 +40,25 @@ test('Mehr als 60 Sekunden wird abgelehnt', async () => {
     const res = await post(`${base}/api/episodes`, { title: 'Zu lang', durationSeconds: 61 });
     assert.equal(res.status, 400);
   });
+});
+
+test('Mit gesetztem Token sind Anfragen ohne Token gesperrt', async () => {
+  const server = createApp({ token: 'geheim' });
+  await new Promise((r) => server.listen(0, r));
+  const base = `http://localhost:${server.address().port}`;
+  try {
+    assert.equal((await fetch(base)).status, 401);
+    assert.equal((await fetch(`${base}/?token=falsch`)).status, 401);
+    assert.equal((await fetch(`${base}/?token=geheim`)).status, 200);
+    const res = await fetch(`${base}/api/episodes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-zero-token': 'geheim' },
+      body: JSON.stringify({ title: 'T', durationSeconds: 61 }),
+    });
+    assert.equal(res.status, 400, 'mit Token kommt die Anfrage durch (Validierung greift)');
+  } finally {
+    await new Promise((r) => server.close(r));
+  }
 });
 
 test('Startseite wird ausgeliefert', async () => {

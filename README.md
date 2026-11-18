@@ -23,7 +23,12 @@ Eine Idee. Ein Auftrag. Eine vollständige Produktion. BEYOND LIMITS.
 | Szenen-Versionen: nur eine Szene neu, Umgebung/Kleidung bleiben | `src/series.js` | getestet |
 | Mobile Oberfläche (Auftrag, Status, Szene neu erstellen) | `public/index.html` | nur ausgeliefert, nicht auf dem iPhone geprüft |
 
-Die Schritte erzeugen **keine echten Medien**. Der Export liefert einen Platzhalter.
+| Echter Export mit ffmpeg (mp4, höchstens 60 Sekunden, Länge per ffprobe geprüft) | `src/export.js` | getestet |
+| Agenten: Kontinuität (Umgebung/Kleidung) und Qualitätskontrolle (Länge, Export) | `src/agents.js` | getestet |
+| Video-Auslieferung `GET /api/episodes/:id/video` | `src/server.js` | getestet |
+
+Der Export ist ein **technischer Test** (Farbflächen und Testton), **keine KI-Medien**. Benötigt ffmpeg und ffprobe.
+Die Texte, Bilder, Videos und Stimmen selbst stammen noch nicht von KI-Modellen.
 
 Noch **nicht** vorhanden und nicht als fertig zu betrachten: echte KI-Modelle, echter Video-Export,
 Agenten, dauerhafte Datenbank (PostgreSQL), vollständige iPhone-Oberfläche, Deployment.
