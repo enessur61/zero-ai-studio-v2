@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZERO</title>
+<style>
+  :root { --bg:#0B0B0D; --card:#161618; --line:#2A2A2E; --text:#F2F0EA; --muted:#9A9AA2; --accent:#FF5B3A; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.45 system-ui,sans-serif; padding:max(24px,env(safe-area-inset-top)) 20px 32px; max-width:480px; margin-inline:auto; }
+  h1 { margin:0; letter-spacing:.14em; font-size:24px; }
+  .sub { color:var(--muted); font-size:12px; letter-spacing:.18em; margin-bottom:16px; }
+  .banner { border:1px solid var(--accent); color:var(--accent); border-radius:12px; padding:10px 14px; font-size:13px; margin-bottom:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:14px; margin-bottom:12px; }
+  textarea { width:100%; min-height:96px; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:12px; padding:12px; font:inherit; }
+  button { min-height:44px; border:0; border-radius:12px; background:var(--accent); color:#0B0B0D; font:600 15px system-ui; padding:0 16px; width:100%; margin-top:10px; }
+  button.ghost { background:transparent; color:var(--text); border:1px solid #3A3A40; margin-top:8px; }
+  .muted { color:var(--muted); font-size:13px; }
+  .row { display:flex; justify-content:space-between; gap:8px; align-items:center; }
+</style>
+</head>
+<body>
+<h1>ZERO</h1>
+<div class="sub">BEYOND LIMITS.</div>
+<div class="banner">Platzhalter-Modus: Es werden noch keine echten Videos erzeugt.</div>
+<div class="card">
+  <label for="idea" class="muted">Dein Auftrag an ZERO</label>
+  <textarea id="idea">Erstelle die erste Folge meiner Mystery-Serie. Düster, 60 Sekunden, Cliffhanger.</textarea>
+  <button id="go">Folge produzieren</button>
+</div>
+<div id="out"></div>
+<script>
+let episodeId = null;
+const out = document.getElementById('out');
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function render(ep) {
+  const steps = Object.entries(ep.steps).map(([id, s]) =>
+    `<div class="row"><span>${esc(id)}</span><span class="muted">${esc(s.status)}</span></div>`).join('');
+  const scenes = ep.scenes.map((s) =>
+    `<div class="card"><div class="row"><strong>Szene ${s.n}</strong><span class="muted">v${s.version}</span></div>
+     <div class="muted">Stimmung: ${esc(s.mood)} · Umgebung: ${esc(s.environment)} · Kleidung: ${esc(s.outfit)}</div>
+     <button class="ghost" data-n="${s.n}">Szene ${s.n} nervöser neu erstellen</button></div>`).join('');
+  out.innerHTML = `<div class="card"><div class="row"><strong>Produktion</strong><span class="muted">${esc(ep.status)}</span></div>${steps}</div>${scenes}`;
+}
+
+document.getElementById('go').onclick = async () => {
+  const idea = document.getElementById('idea').value;
+  const r = await fetch('/api/episodes', { method:'POST', headers:{'content-type':'application/json'},
+    body: JSON.stringify({ title:'Folge 1', durationSeconds:60, idea }) });
+  const ep = await r.json();
+  if (!r.ok) { out.innerHTML = `<div class="card">${esc(ep.error)}</div>`; return; }
+  episodeId = ep.id; render(ep);
+};
+
+out.addEventListener('click', async (e) => {
+  const n = e.target.dataset && e.target.dataset.n;
+  if (!n || !episodeId) return;
+  await fetch(`/api/episodes/${episodeId}/scenes/${n}/regenerate`, { method:'POST',
+    headers:{'content-type':'application/json'}, body: JSON.stringify({ mood:'nervös' }) });
+  render(await (await fetch(`/api/episodes/${episodeId}`)).json());
+});
+</script>
+</body>
+</html>

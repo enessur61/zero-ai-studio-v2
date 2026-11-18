@@ -14,8 +14,19 @@ Eine Idee. Ein Auftrag. Eine vollständige Produktion. BEYOND LIMITS.
 | Episoden-Pipeline mit Wiederaufnahme (fertige Schritte laufen nicht erneut) | `src/pipeline.js` | getestet |
 | Maximal 60 Sekunden pro Video | `src/pipeline.js` | getestet |
 
-Noch **nicht** vorhanden und nicht als fertig zu betrachten: echte KI-Modelle, Video-Export,
-Seriengedächtnis, Szenen-Versionen, Agenten, iPhone-Oberfläche, Datenbank.
+**Lauffähige App-Scheibe im PLATZHALTER-MODUS** (`npm start`, dann http://localhost:3000 am iPhone/Browser):
+
+| Baustein | Datei | Status |
+|---|---|---|
+| Server mit API (Folge produzieren, Status, Szene neu erstellen) | `src/server.js` | getestet |
+| Seriengedächtnis: Figuren, Wissen nach Folge | `src/series.js` | getestet (im Speicher) |
+| Szenen-Versionen: nur eine Szene neu, Umgebung/Kleidung bleiben | `src/series.js` | getestet |
+| Mobile Oberfläche (Auftrag, Status, Szene neu erstellen) | `public/index.html` | nur ausgeliefert, nicht auf dem iPhone geprüft |
+
+Die Schritte erzeugen **keine echten Medien**. Der Export liefert einen Platzhalter.
+
+Noch **nicht** vorhanden und nicht als fertig zu betrachten: echte KI-Modelle, echter Video-Export,
+Agenten, dauerhafte Datenbank (PostgreSQL), vollständige iPhone-Oberfläche, Deployment.
 Eine funktionierende Episode muss später mit realen Modellen und einem exportierten Video nachgewiesen werden.
 
 ## Regeln
