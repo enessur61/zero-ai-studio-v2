@@ -31,6 +31,8 @@
 <div id="out"></div>
 <script>
 let episodeId = null;
+const token = new URLSearchParams(location.search).get('token') || '';
+const hdr = (extra = {}) => (token ? { ...extra, 'x-zero-token': token } : extra);
 const out = document.getElementById('out');
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -42,14 +44,14 @@ function render(ep) {
      <div class="muted">Stimmung: ${esc(s.mood)} · Umgebung: ${esc(s.environment)} · Kleidung: ${esc(s.outfit)}</div>
      <button class="ghost" data-n="${s.n}">Szene ${s.n} nervöser neu erstellen</button></div>`).join('');
   const video = ep.steps.export && ep.steps.export.status === 'done'
-    ? `<div class="card"><video controls playsinline style="width:100%;border-radius:12px" src="/api/episodes/${esc(ep.id)}/video?t=${Date.now()}"></video><div class="muted">Technischer Test-Export (Farbflächen und Testton), keine KI-Medien.</div></div>`
+    ? `<div class="card"><video controls playsinline style="width:100%;border-radius:12px" src="/api/episodes/${esc(ep.id)}/video?t=${Date.now()}&token=${encodeURIComponent(token)}"></video><div class="muted">Technischer Test-Export (Farbflächen und Testton), keine KI-Medien.</div></div>`
     : '';
   out.innerHTML = `<div class="card"><div class="row"><strong>Produktion</strong><span class="muted">${esc(ep.status)}</span></div>${steps}</div>${video}${scenes}`;
 }
 
 document.getElementById('go').onclick = async () => {
   const idea = document.getElementById('idea').value;
-  const r = await fetch('/api/episodes', { method:'POST', headers:{'content-type':'application/json'},
+  const r = await fetch('/api/episodes', { method:'POST', headers: hdr({'content-type':'application/json'}),
     body: JSON.stringify({ title:'Folge 1', durationSeconds:60, idea }) });
   const ep = await r.json();
   if (!r.ok) { out.innerHTML = `<div class="card">${esc(ep.error)}</div>`; return; }
@@ -60,8 +62,8 @@ out.addEventListener('click', async (e) => {
   const n = e.target.dataset && e.target.dataset.n;
   if (!n || !episodeId) return;
   await fetch(`/api/episodes/${episodeId}/scenes/${n}/regenerate`, { method:'POST',
-    headers:{'content-type':'application/json'}, body: JSON.stringify({ mood:'nervös' }) });
-  render(await (await fetch(`/api/episodes/${episodeId}`)).json());
+    headers: hdr({'content-type':'application/json'}), body: JSON.stringify({ mood:'nervös' }) });
+  render(await (await fetch(`/api/episodes/${episodeId}`, { headers: hdr() })).json());
 });
 </script>
 </body>

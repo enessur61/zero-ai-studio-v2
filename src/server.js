@@ -15,7 +15,11 @@ import { tmpdir } from 'node:os';
 
 const SCENE_COUNT = 3;
 
-export function createApp({ guard, outDir = join(tmpdir(), 'zero-out') } = {}) {
+export function createApp({
+  guard,
+  outDir = join(tmpdir(), 'zero-out'),
+  token = process.env.ZERO_ACCESS_TOKEN,
+} = {}) {
   if (!guard) {
     const registry = new ProviderRegistry().register({
       id: 'stub-local',
@@ -104,6 +108,11 @@ export function createApp({ guard, outDir = join(tmpdir(), 'zero-out') } = {}) {
     try {
       const url = new URL(req.url, 'http://localhost');
       const path = url.pathname;
+
+      // Zugangsschutz: Wenn ein Token gesetzt ist, ist jede Anfrage ohne passendes Token gesperrt.
+      if (token && req.headers['x-zero-token'] !== token && url.searchParams.get('token') !== token) {
+        return send(res, 401, { error: 'Zugang nur mit Token' });
+      }
 
       if (req.method === 'GET' && path === '/') {
         const html = await readFile(new URL('../public/index.html', import.meta.url));
