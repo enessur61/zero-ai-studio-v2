@@ -1,0 +1,13 @@
+{
+  "name": "zero-ai-studio-v2",
+  "version": "0.1.0",
+  "description": "ZERO AI Studio: Sicherheitsbasis (Kostenkontrolle, Provider-Sperren) und wiederaufnehmbare Episoden-Pipeline",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
