@@ -6,10 +6,16 @@ import { randomUUID } from 'node:crypto';
 import { CATEGORY, ProviderRegistry, CostGuard } from './safety.js';
 import { MemoryStore, runEpisode, validateBrief } from './pipeline.js';
 import { SeriesMemory } from './series.js';
+import { exportEpisode } from './export.js';
+import { reviewEpisode } from './agents.js';
+import { mkdir, stat } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 const SCENE_COUNT = 3;
 
-export function createApp({ guard } = {}) {
+export function createApp({ guard, outDir = join(tmpdir(), 'zero-out') } = {}) {
   if (!guard) {
     const registry = new ProviderRegistry().register({
       id: 'stub-local',
@@ -45,7 +51,31 @@ export function createApp({ guard } = {}) {
     {
       id: 'export',
       providerId: 'stub-local',
-      run: async () => ({ stub: true, file: null, note: 'Kein echtes Video: Platzhalter-Pipeline' }),
+      run: async ({ brief }) => {
+        await mkdir(outDir, { recursive: true });
+        return exportEpisode({
+          sceneCount: SCENE_COUNT,
+          durationSeconds: brief.durationSeconds,
+          outPath: join(outDir, `${id}.mp4`),
+        });
+      },
+    },
+    {
+      id: 'review',
+      run: async ({ brief, results }) => {
+        const sceneHistories = {};
+        for (let n = 1; n <= SCENE_COUNT; n += 1) {
+          sceneHistories[`${id}:${n}`] = memory.scene(`${id}:${n}`).versions;
+        }
+        const review = reviewEpisode({
+          sceneHistories,
+          exportInfo: results.export,
+          sceneCount: SCENE_COUNT,
+          targetSeconds: brief.durationSeconds,
+        });
+        if (!review.ok) throw new Error(review.findings.map((f) => f.message).join('; '));
+        return review;
+      },
     },
   ];
 
@@ -96,7 +126,17 @@ export function createApp({ guard } = {}) {
         return send(res, 200, view(episodeMatch[1]));
       }
 
-      const sceneMatch = path.match(/^\/api\/episodes\/([\w-]+)\/scenes\/(\d+)\/regenerate$/);
+      const videoMatch = path.match(/^\/api\/episodes\/([\w-]+)\/video$/);
+      if (req.method === 'GET' && videoMatch) {
+        const ep = episodes.get(videoMatch[1]);
+        const file = ep?.state.steps.export?.result?.file;
+        if (!file) return send(res, 404, { error: 'Kein Video vorhanden' });
+        const { size } = await stat(file);
+        res.writeHead(200, { 'content-type': 'video/mp4', 'content-length': size });
+        return createReadStream(file).pipe(res);
+      }
+
+      const sceneMatch =path.match(/^\/api\/episodes\/([\w-]+)\/scenes\/(\d+)\/regenerate$/);
       if (req.method === 'POST' && sceneMatch) {
         const [, id, n] = sceneMatch;
         if (!episodes.has(id)) return send(res, 404, { error: 'Folge nicht gefunden' });

@@ -22,7 +22,7 @@
 <body>
 <h1>ZERO</h1>
 <div class="sub">BEYOND LIMITS.</div>
-<div class="banner">Platzhalter-Modus: Es werden noch keine echten Videos erzeugt.</div>
+<div class="banner">Platzhalter-Modus: Das Video ist ein technischer Test-Export, noch ohne KI-Bilder und KI-Stimmen. Platzhalter-Modus.</div>
 <div class="card">
   <label for="idea" class="muted">Dein Auftrag an ZERO</label>
   <textarea id="idea">Erstelle die erste Folge meiner Mystery-Serie. Düster, 60 Sekunden, Cliffhanger.</textarea>
@@ -41,7 +41,10 @@ function render(ep) {
     `<div class="card"><div class="row"><strong>Szene ${s.n}</strong><span class="muted">v${s.version}</span></div>
      <div class="muted">Stimmung: ${esc(s.mood)} · Umgebung: ${esc(s.environment)} · Kleidung: ${esc(s.outfit)}</div>
      <button class="ghost" data-n="${s.n}">Szene ${s.n} nervöser neu erstellen</button></div>`).join('');
-  out.innerHTML = `<div class="card"><div class="row"><strong>Produktion</strong><span class="muted">${esc(ep.status)}</span></div>${steps}</div>${scenes}`;
+  const video = ep.steps.export && ep.steps.export.status === 'done'
+    ? `<div class="card"><video controls playsinline style="width:100%;border-radius:12px" src="/api/episodes/${esc(ep.id)}/video?t=${Date.now()}"></video><div class="muted">Technischer Test-Export (Farbflächen und Testton), keine KI-Medien.</div></div>`
+    : '';
+  out.innerHTML = `<div class="card"><div class="row"><strong>Produktion</strong><span class="muted">${esc(ep.status)}</span></div>${steps}</div>${video}${scenes}`;
 }
 
 document.getElementById('go').onclick = async () => {

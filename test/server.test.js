@@ -23,7 +23,8 @@ test('Folge produzieren und einzelne Szene neu erstellen', async () => {
     const ep = await res.json();
     assert.equal(ep.status, 'done');
     assert.equal(ep.scenes.length, 3);
-    assert.equal(ep.steps.export.result.stub, true, 'Export ist ausdrücklich ein Platzhalter');
+    assert.ok(ep.steps.export.result.file, 'Export hat eine Datei erzeugt');
+    assert.match(ep.steps.export.result.note, /Test-Export/, 'Export ist ausdrücklich ein Test-Export');
 
     const regen = await post(`${base}/api/episodes/${ep.id}/scenes/2/regenerate`, { mood: 'nervös' });
     assert.equal(regen.status, 200);
